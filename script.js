@@ -34,23 +34,12 @@ if (!isConfigured) {
 } else {
   const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
 
-  async function renderSession(session) {
-    const isSignedIn = Boolean(session);
-    authPanel.classList.toggle('hidden', isSignedIn);
-    directoryPanel.classList.toggle('hidden', !isSignedIn);
-    logoutButton.classList.toggle('hidden', !isSignedIn);
-    if (!session) return;
-
-    signedInAs.textContent = `${session.user.email} 계정으로 로그인했습니다.`;
-    memberList.innerHTML = '<p class="status">목록을 불러오는 중입니다…</p>';
-    const { data, error } = await supabase.from('members').select('id, name, email').order('id');
-
-    if (error) {
-      memberList.innerHTML = `<p class="status error">목록을 불러오지 못했습니다: ${escapeHtml(error.message)}</p>`;
-      return;
-    }
-
-    memberList.innerHTML = data.map((member, index) => `
+  function showDirectory(email, members) {
+    authPanel.classList.add('hidden');
+    directoryPanel.classList.remove('hidden');
+    logoutButton.classList.remove('hidden');
+    signedInAs.textContent = `${email} 이메일로 로그인했습니다.`;
+    memberList.innerHTML = members.map((member, index) => `
       <article class="member-card">
         <span>MEMBER ${String(index + 1).padStart(2, '0')}</span>
         <h3>${escapeHtml(member.name)}</h3>
@@ -59,23 +48,44 @@ if (!isConfigured) {
     `).join('');
   }
 
+  function showLogin() {
+    sessionStorage.removeItem('memberEmail');
+    authPanel.classList.remove('hidden');
+    directoryPanel.classList.add('hidden');
+    logoutButton.classList.add('hidden');
+    memberList.innerHTML = '';
+  }
+
+  async function loginWithEmail(email) {
+    const { data, error } = await supabase.rpc('get_members_for_email', { requesting_email: email });
+
+    if (error) {
+      throw error;
+    }
+    if (!data.length) throw new Error('목록에 등록되지 않은 이메일입니다.');
+    sessionStorage.setItem('memberEmail', email);
+    showDirectory(email, data);
+  }
+
   loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const button = loginForm.querySelector('button');
     const email = String(new FormData(loginForm).get('email')).trim();
     button.disabled = true;
-    authMessage.textContent = '로그인 링크를 보내는 중입니다…';
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.href.split('#')[0] }
-    });
-    authMessage.textContent = error ? `로그인 링크를 보내지 못했습니다: ${error.message}` : '이메일을 확인해 로그인 링크를 눌러 주세요.';
-    authMessage.classList.toggle('error', Boolean(error));
+    authMessage.textContent = '이메일을 확인하는 중입니다…';
+    try {
+      await loginWithEmail(email);
+      authMessage.textContent = '';
+    } catch (error) {
+      authMessage.textContent = error.message;
+      authMessage.classList.add('error');
+    }
     button.disabled = false;
   });
 
-  logoutButton.addEventListener('click', () => supabase.auth.signOut());
-  supabase.auth.onAuthStateChange((_event, session) => { void renderSession(session); });
-  const { data: { session } } = await supabase.auth.getSession();
-  await renderSession(session);
+  logoutButton.addEventListener('click', showLogin);
+  const savedEmail = sessionStorage.getItem('memberEmail');
+  if (savedEmail) {
+    try { await loginWithEmail(savedEmail); } catch { showLogin(); }
+  }
 }

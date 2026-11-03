@@ -1,13 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const loginGate = document.querySelector('#login-gate');
+const protectedSite = document.querySelector('#protected-site');
+const loginForm = document.querySelector('#login-form');
+const authMessage = document.querySelector('#auth-message');
 const themeButton = document.querySelector('#theme-button');
 const logoutButton = document.querySelector('#logout-button');
-const loginForm = document.querySelector('#login-form');
-const authPanel = document.querySelector('#auth-panel');
-const directoryPanel = document.querySelector('#directory-panel');
-const authMessage = document.querySelector('#auth-message');
-const signedInAs = document.querySelector('#signed-in-as');
-const memberList = document.querySelector('#member-list');
 
 function setTheme(isDark) {
   document.body.classList.toggle('dark', isDark);
@@ -16,55 +14,37 @@ function setTheme(isDark) {
   themeButton.textContent = isDark ? '밝은 화면으로 보기' : '어두운 화면으로 보기';
 }
 
-function escapeHtml(value) {
-  const element = document.createElement('div');
-  element.textContent = value;
-  return element.innerHTML;
+function enterSite(email) {
+  sessionStorage.setItem('memberEmail', email);
+  loginGate.classList.add('hidden');
+  protectedSite.classList.remove('hidden');
+}
+
+function leaveSite() {
+  sessionStorage.removeItem('memberEmail');
+  protectedSite.classList.add('hidden');
+  loginGate.classList.remove('hidden');
+  loginForm.reset();
+  authMessage.textContent = '';
 }
 
 setTheme(false);
 themeButton.addEventListener('click', () => setTheme(!document.body.classList.contains('dark')));
+logoutButton.addEventListener('click', leaveSite);
 
 const config = window.APP_CONFIG ?? {};
 const isConfigured = config.supabaseUrl && config.supabaseAnonKey && !config.supabaseUrl.includes('YOUR_PROJECT');
 
 if (!isConfigured) {
-  authMessage.textContent = 'Supabase 설정이 필요합니다. config.example.js를 참고해 config.js를 만들어 주세요.';
+  authMessage.textContent = '웹사이트 설정이 완료되지 않았습니다.';
   loginForm.querySelector('button').disabled = true;
 } else {
   const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
 
-  function showDirectory(email, members) {
-    authPanel.classList.add('hidden');
-    directoryPanel.classList.remove('hidden');
-    logoutButton.classList.remove('hidden');
-    signedInAs.textContent = `${email} 이메일로 로그인했습니다.`;
-    memberList.innerHTML = members.map((member, index) => `
-      <article class="member-card">
-        <span>MEMBER ${String(index + 1).padStart(2, '0')}</span>
-        <h3>${escapeHtml(member.name)}</h3>
-        <a href="mailto:${encodeURIComponent(member.email)}">${escapeHtml(member.email)}</a>
-      </article>
-    `).join('');
-  }
-
-  function showLogin() {
-    sessionStorage.removeItem('memberEmail');
-    authPanel.classList.remove('hidden');
-    directoryPanel.classList.add('hidden');
-    logoutButton.classList.add('hidden');
-    memberList.innerHTML = '';
-  }
-
-  async function loginWithEmail(email) {
-    const { data, error } = await supabase.rpc('get_members_for_email', { requesting_email: email });
-
-    if (error) {
-      throw error;
-    }
-    if (!data.length) throw new Error('목록에 등록되지 않은 이메일입니다.');
-    sessionStorage.setItem('memberEmail', email);
-    showDirectory(email, data);
+  async function isAllowed(email) {
+    const { data, error } = await supabase.rpc('is_email_allowed', { requesting_email: email });
+    if (error) throw error;
+    return data === true;
   }
 
   loginForm.addEventListener('submit', async (event) => {
@@ -72,20 +52,31 @@ if (!isConfigured) {
     const button = loginForm.querySelector('button');
     const email = String(new FormData(loginForm).get('email')).trim();
     button.disabled = true;
+    authMessage.classList.remove('error');
     authMessage.textContent = '이메일을 확인하는 중입니다…';
+
     try {
-      await loginWithEmail(email);
-      authMessage.textContent = '';
+      if (await isAllowed(email)) {
+        authMessage.textContent = '';
+        enterSite(email);
+      } else {
+        authMessage.textContent = '목록에 등록되지 않은 이메일입니다.';
+        authMessage.classList.add('error');
+      }
     } catch (error) {
-      authMessage.textContent = error.message;
+      authMessage.textContent = `로그인할 수 없습니다: ${error.message}`;
       authMessage.classList.add('error');
     }
     button.disabled = false;
   });
 
-  logoutButton.addEventListener('click', showLogin);
   const savedEmail = sessionStorage.getItem('memberEmail');
   if (savedEmail) {
-    try { await loginWithEmail(savedEmail); } catch { showLogin(); }
+    try {
+      if (await isAllowed(savedEmail)) enterSite(savedEmail);
+      else leaveSite();
+    } catch {
+      leaveSite();
+    }
   }
 }

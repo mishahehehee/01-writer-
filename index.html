@@ -9,50 +9,47 @@
   <script type="module" src="script.js"></script>
 </head>
 <body>
-  <header>
-    <p class="eyebrow">VOL. 05 &nbsp; / &nbsp; SEOUL, KOREA &nbsp; / &nbsp; 2026</p>
-    <div class="header-actions">
-      <button id="theme-button" type="button" aria-pressed="false">다른 테마로 보기</button>
-      <button id="logout-button" class="hidden" type="button">로그아웃</button>
+  <div id="login-gate" class="login-gate">
+    <div class="auth-panel">
+      <p class="section-label">PRIVATE EDITION</p>
+      <h1>WELCOME<br>READER</h1>
+      <p>목록에 등록된 이메일을 입력해야 웹사이트에 입장할 수 있습니다.</p>
+      <form id="login-form">
+        <label for="email">이메일</label>
+        <div class="form-row">
+          <input id="email" name="email" type="email" autocomplete="email" required placeholder="name@example.com">
+          <button type="submit">입장하기</button>
+        </div>
+      </form>
+      <p id="auth-message" class="status" role="status" aria-live="polite"></p>
     </div>
-    <h1>THE DAILY<br>STORY</h1>
-    <p class="intro">정다은 · 글을 쓰는 사람<br>사소한 날들을 오래 읽히는 이야기로.</p>
-  </header>
-  <main>
-    <section>
-      <h2>ABOUT ME</h2>
-      <p>사소한 날들을 오래 읽히는 이야기로. 관찰과 실험을 바탕으로 나만의 작업을 만들어 갑니다.</p>
-    </section>
-    <section>
-      <h2>오늘의 원고</h2>
-      <div class="projects">
-        <article><h3>오래된 골목에서 발견한 것들</h3><p>관찰에서 시작한 첫 번째 작업입니다. 새로운 관점으로 문제를 발견하고, 나만의 방식으로 해석했습니다.</p></article>
-        <article><h3>여행 가방에 담지 못한 문장</h3><p>사람과 이야기를 연결하는 두 번째 작업입니다. 기획부터 완성까지 직접 참여하며 배운 경험을 담았습니다.</p></article>
+  </div>
+
+  <div id="protected-site" class="hidden">
+    <header>
+      <p class="eyebrow">VOL. 05 &nbsp; / &nbsp; SEOUL, KOREA &nbsp; / &nbsp; 2026</p>
+      <div class="header-actions">
+        <button id="theme-button" type="button" aria-pressed="false">다른 테마로 보기</button>
+        <button id="logout-button" type="button">로그아웃</button>
       </div>
-    </section>
-    <section><h2>CONTACT</h2><p>hello@example.com</p></section>
-    <section class="members-section">
-      <div id="auth-panel" class="auth-panel">
-        <p class="section-label">MEMBERS ONLY</p>
-        <h2>로그인</h2>
-        <p>목록에 등록된 이메일을 입력해 로그인하세요.</p>
-        <form id="login-form">
-          <label for="email">이메일</label>
-          <div class="form-row">
-            <input id="email" name="email" type="email" autocomplete="email" required placeholder="name@example.com">
-            <button type="submit">로그인</button>
-          </div>
-        </form>
-        <p id="auth-message" class="status" role="status" aria-live="polite"></p>
-      </div>
-      <div id="directory-panel" class="hidden">
-        <p class="section-label">PRIVATE DIRECTORY</p>
-        <h2>멤버 목록</h2>
-        <p id="signed-in-as" class="status"></p>
-        <div id="member-list" class="member-list" aria-live="polite"></div>
-      </div>
-    </section>
-  </main>
-  <footer>© 2026 정다은 · 글을 쓰는 사람 / PORTFOLIO</footer>
+      <h1>THE DAILY<br>STORY</h1>
+      <p class="intro">정다은 · 글을 쓰는 사람<br>사소한 날들을 오래 읽히는 이야기로.</p>
+    </header>
+    <main>
+      <section>
+        <h2>ABOUT ME</h2>
+        <p>사소한 날들을 오래 읽히는 이야기로. 관찰과 실험을 바탕으로 나만의 작업을 만들어 갑니다.</p>
+      </section>
+      <section>
+        <h2>오늘의 원고</h2>
+        <div class="projects">
+          <article><h3>오래된 골목에서 발견한 것들</h3><p>관찰에서 시작한 첫 번째 작업입니다. 새로운 관점으로 문제를 발견하고, 나만의 방식으로 해석했습니다.</p></article>
+          <article><h3>여행 가방에 담지 못한 문장</h3><p>사람과 이야기를 연결하는 두 번째 작업입니다. 기획부터 완성까지 직접 참여하며 배운 경험을 담았습니다.</p></article>
+        </div>
+      </section>
+      <section><h2>CONTACT</h2><p>hello@example.com</p></section>
+    </main>
+    <footer>© 2026 정다은 · 글을 쓰는 사람 / PORTFOLIO</footer>
+  </div>
 </body>
 </html>
